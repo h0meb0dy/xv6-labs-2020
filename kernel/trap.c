@@ -66,10 +66,14 @@ void usertrap(void) {
         if (*pte & PTE_COW) {
             uint64 pa = PTE2PA(*pte);
             uint64 flags = PTE_FLAGS(*pte);
-            *pte |= PTE_W;  // restore write permission
-            *pte &= ~PTE_COW; // remove COW mapping flag
+            *pte |= PTE_W;     // restore write permission
+            *pte &= ~PTE_COW;  // remove COW mapping flag
 
             void *mem = kalloc();  // new memory
+            if (!mem) {
+                p->killed = 1;
+                goto kill;
+            }
             memmove(mem, (void *)pa, PGSIZE);
 
             uvmunmap(p->pagetable, va, 1, 1);
@@ -77,14 +81,17 @@ void usertrap(void) {
                 kfree(mem);
                 uvmunmap(p->pagetable, va, 1, 1);
                 p->killed = 1;
+                goto kill;
             }
         }
     } else {
         printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
         printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
         p->killed = 1;
+        goto kill;
     }
 
+kill:
     if (p->killed) exit(-1);
 
     // give up the CPU if this is a timer interrupt.

@@ -65,7 +65,7 @@ void kvminithart() {
 //   12..20 -- 9 bits of level-0 index.
 //    0..11 -- 12 bits of byte offset within the page.
 pte_t *walk(pagetable_t pagetable, uint64 va, int alloc) {
-    if (va >= MAXVA) panic("walk");
+    if (va >= MAXVA) return 0;  // panic("walk");
 
     for (int level = 2; level > 0; level--) {
         pte_t *pte = &pagetable[PX(level, va)];
@@ -157,7 +157,7 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free) {
         uint64 pa = PTE2PA(*pte);
         dec_refcnt(pa);
         if (do_free) {
-            if (!get_refcnt(pa)) kfree((void *)pa); // free only when reference count is 0
+            if (!get_refcnt(pa)) kfree((void *)pa);  // free only when reference count is 0
         }
         *pte = 0;
     }
@@ -268,8 +268,8 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
         if ((*pte & PTE_V) == 0) panic("uvmcopy: page not present");
         pa = PTE2PA(*pte);
         flags = PTE_FLAGS(*pte);
-        *pte &= ~PTE_W;  // remove write permission
-        *pte |= PTE_COW; // add COW mapping flag
+        *pte &= ~PTE_W;   // remove write permission
+        *pte |= PTE_COW;  // add COW mapping flag
 
         // if ((mem = kalloc()) == 0) goto err;
         // memmove(mem, (char *)pa, PGSIZE);
@@ -308,6 +308,9 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
         va0 = PGROUNDDOWN(dstva);
         // pa0 = walkaddr(pagetable, va0);
         pte_t *pte = walk(pagetable, va0, 0);
+        if (!pte) {
+            return -1;
+        }
         pa0 = PTE2PA(*pte);
 
         // handle COW
@@ -317,6 +320,9 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
             *pte &= ~PTE_COW;  // remove COW mapping flag
 
             void *mem = kalloc();  // new memory
+            if (!mem) {
+                return 0;
+            }
             memmove(mem, (void *)pa0, PGSIZE);
             pa0 = (uint64)mem;
 
@@ -327,8 +333,7 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
             }
         }
 
-        if (pa0 == 0)
-            return -1;
+        if (pa0 == 0) return -1;
         n = PGSIZE - (dstva - va0);
         if (n > len) n = len;
         memmove((void *)(pa0 + (dstva - va0)), src, n);
