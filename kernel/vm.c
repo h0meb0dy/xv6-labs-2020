@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -91,7 +93,22 @@ uint64 walkaddr(pagetable_t pagetable, uint64 va) {
 
     pte = walk(pagetable, va, 0);
     if (pte == 0) return 0;
-    if ((*pte & PTE_V) == 0) return 0;
+
+    // lazy allocation
+    if (!(*pte & PTE_V)) {
+        struct proc *p = myproc();
+        if (p->sz > va) {
+            pa = (uint64)kalloc();
+            if (!pa) return 0;
+            memset((void *)pa, 0, PGSIZE);
+            if (mappages(pagetable, va, PGSIZE, (uint64)pa, PTE_W | PTE_X | PTE_R | PTE_U)) {
+                kfree((void *)pa);
+                return 0;
+            }
+        } else
+            return 0;
+    }
+
     if ((*pte & PTE_U) == 0) return 0;
     pa = PTE2PA(*pte);
     return pa;
@@ -132,7 +149,12 @@ int mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
     last = PGROUNDDOWN(va + size - 1);
     for (;;) {
         if ((pte = walk(pagetable, a, 1)) == 0) return -1;
-        if (*pte & PTE_V) panic("remap");
+        if (*pte & PTE_V) {
+            // panic("remap");
+            a += PGSIZE;
+            pa += PGSIZE;
+            continue;
+        }
         *pte = PA2PTE(pa) | perm | PTE_V;
         if (a == last) break;
         a += PGSIZE;
@@ -236,9 +258,8 @@ void freewalk(pagetable_t pagetable) {
             uint64 child = PTE2PA(pte);
             freewalk((pagetable_t)child);
             pagetable[i] = 0;
-        } else if (pte & PTE_V) {
-            panic("freewalk: leaf");
-        }
+        } else if (pte & PTE_V)
+            continue;  // panic("freewalk: leaf");
     }
     kfree((void *)pagetable);
 }

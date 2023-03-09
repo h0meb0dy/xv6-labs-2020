@@ -37,7 +37,7 @@ uint64 sys_sbrk(void) {
     p->sz += n;  // increment size of process by n
 
     // if argument of sbrk() is negative, unmap and free
-    if (n < 0) uvmunmap(p->pagetable, p->sz, (addr - p->sz) / PGSIZE, 1);
+    if (n < 0) uvmunmap(p->pagetable, PGROUNDDOWN(p->sz), (addr - PGROUNDDOWN(p->sz)) / PGSIZE, 1);
 
     return addr;
 }
