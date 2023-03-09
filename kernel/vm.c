@@ -154,9 +154,10 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free) {
         if ((pte = walk(pagetable, a, 0)) == 0) panic("uvmunmap: walk");
         if ((*pte & PTE_V) == 0) panic("uvmunmap: not mapped");
         if (PTE_FLAGS(*pte) == PTE_V) panic("uvmunmap: not a leaf");
+        uint64 pa = PTE2PA(*pte);
+        dec_refcnt(pa);
         if (do_free) {
-            uint64 pa = PTE2PA(*pte);
-            kfree((void *)pa);
+            if (!get_refcnt(pa)) kfree((void *)pa); // free only when reference count is 0
         }
         *pte = 0;
     }
@@ -267,9 +268,15 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
         if ((*pte & PTE_V) == 0) panic("uvmcopy: page not present");
         pa = PTE2PA(*pte);
         flags = PTE_FLAGS(*pte);
-        if ((mem = kalloc()) == 0) goto err;
-        memmove(mem, (char *)pa, PGSIZE);
-        if (mappages(new, i, PGSIZE, (uint64)mem, flags) != 0) {
+        *pte &= ~PTE_W;  // remove write permission
+        *pte |= PTE_COW; // add COW mapping flag
+
+        // if ((mem = kalloc()) == 0) goto err;
+        // memmove(mem, (char *)pa, PGSIZE);
+        mem = (void *)pa;
+        inc_refcnt((uint64)mem);
+
+        if (mappages(new, i, PGSIZE, (uint64)mem, (flags & ~PTE_W) | PTE_COW) != 0) {
             kfree(mem);
             goto err;
         }
@@ -299,8 +306,29 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
 
     while (len > 0) {
         va0 = PGROUNDDOWN(dstva);
-        pa0 = walkaddr(pagetable, va0);
-        if (pa0 == 0) return -1;
+        // pa0 = walkaddr(pagetable, va0);
+        pte_t *pte = walk(pagetable, va0, 0);
+        pa0 = PTE2PA(*pte);
+
+        // handle COW
+        if (*pte & PTE_COW) {
+            uint64 flags = PTE_FLAGS(*pte);
+            *pte |= PTE_W;     // restore write permission
+            *pte &= ~PTE_COW;  // remove COW mapping flag
+
+            void *mem = kalloc();  // new memory
+            memmove(mem, (void *)pa0, PGSIZE);
+            pa0 = (uint64)mem;
+
+            uvmunmap(pagetable, va0, 1, 1);
+            if (mappages(pagetable, va0, PGSIZE, (uint64)pa0, (flags & ~PTE_COW) | PTE_W)) {
+                kfree((void *)pa0);
+                uvmunmap(pagetable, va0, 1, 1);
+            }
+        }
+
+        if (pa0 == 0)
+            return -1;
         n = PGSIZE - (dstva - va0);
         if (n > len) n = len;
         memmove((void *)(pa0 + (dstva - va0)), src, n);

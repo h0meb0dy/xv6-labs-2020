@@ -23,6 +23,23 @@ struct {
     struct run *freelist;
 } kmem;
 
+int refcnt[PHYSTOP / PGSIZE] = {0}; // reference count of each page
+
+// return reference count of page
+int get_refcnt(uint64 va) {
+    return refcnt[va / PGSIZE];
+}
+
+// increase reference count of page by 1
+void inc_refcnt(uint64 va) {
+    refcnt[va / PGSIZE]++;
+}
+
+// decrease reference count of page by 1
+void dec_refcnt(uint64 va) {
+    refcnt[va / PGSIZE]--;
+}
+
 void kinit() {
     initlock(&kmem.lock, "kmem");
     freerange(end, (void *)PHYSTOP);
@@ -51,6 +68,7 @@ void kfree(void *pa) {
     acquire(&kmem.lock);
     r->next = kmem.freelist;
     kmem.freelist = r;
+    refcnt[(uint64)r / PGSIZE] = 0;
     release(&kmem.lock);
 }
 
@@ -63,6 +81,7 @@ void *kalloc(void) {
     acquire(&kmem.lock);
     r = kmem.freelist;
     if (r) kmem.freelist = r->next;
+    refcnt[(uint64)r / PGSIZE] = 1;
     release(&kmem.lock);
 
     if (r) memset((char *)r, 5, PGSIZE);  // fill with junk
