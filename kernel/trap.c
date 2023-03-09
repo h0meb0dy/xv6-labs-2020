@@ -58,15 +58,20 @@ void usertrap(void) {
     } else if (r_scause() == 13 || r_scause() == 15) {
         // referred to uvmalloc()
         uint64 va = PGROUNDDOWN(r_stval());  // address of faulted page
+        if (va > p->sz) {
+            p->killed = 1;
+            goto kill;
+        }
         char *mem = kalloc();
         if (!mem) {
             p->killed = 1;
-        } else {
-            memset(mem, 0, PGSIZE);
-            if (mappages(p->pagetable, va, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U) != 0) {
-                kfree(mem);
-                p->killed = 1;
-            }
+            goto kill;
+        }
+        memset(mem, 0, PGSIZE);
+        if (mappages(p->pagetable, va, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U) != 0) {
+            kfree(mem);
+            p->killed = 1;
+            goto kill;
         }
     } else {
         printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
@@ -74,6 +79,7 @@ void usertrap(void) {
         p->killed = 1;
     }
 
+kill:
     if (p->killed) exit(-1);
 
     // give up the CPU if this is a timer interrupt.
