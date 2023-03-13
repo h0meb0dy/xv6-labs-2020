@@ -18,13 +18,20 @@ struct run {
     struct run *next;
 };
 
+#define MAX_LOCKNAME_LEN 0x10
+
 struct {
     struct spinlock lock;
+    char lockname[MAX_LOCKNAME_LEN];  // lock name (required by kinit)
     struct run *freelist;
-} kmem;
+} kmem[NCPU];  // per-CPU freelists
 
 void kinit() {
-    initlock(&kmem.lock, "kmem");
+    // initlock(&kmem.lock, "kmem");
+    for (int i = 0; i < sizeof(&kmem); i++) {
+        snprintf(kmem[i].lockname, sizeof(kmem[i].lockname), "kmem%d", i + 1);  // kmem1, kmem2, kmem3, ...
+        initlock(&kmem[i].lock, kmem[i].lockname);
+    }
     freerange(end, (void *)PHYSTOP);
 }
 
@@ -50,10 +57,19 @@ void kfree(void *pa) {
 
     r = (struct run *)pa;
 
-    acquire(&kmem.lock);
-    r->next = kmem.freelist;
-    kmem.freelist = r;
-    release(&kmem.lock);
+    int cid = cpuid();
+    acquire(&kmem[cid].lock);
+    r->next = kmem[cid].freelist;
+    kmem[cid].freelist = r;
+    release(&kmem[cid].lock);
+}
+
+// search and return a free memory from cpu[cid]
+// if there is no free memory in cpu[cid], return 0
+struct run *search_freemem(int cid) {
+    struct run *mem = kmem[cid].freelist;
+    if (mem) kmem[cid].freelist = mem->next;
+    return mem;
 }
 
 // Allocate one 4096-byte page of physical memory.
@@ -63,11 +79,23 @@ void *
 kalloc(void) {
     struct run *r;
 
-    acquire(&kmem.lock);
-    r = kmem.freelist;
+    int cid = cpuid();
+    acquire(&kmem[cid].lock);
+    /*
+    r = kmem[cid].freelist;
     if (r)
-        kmem.freelist = r->next;
-    release(&kmem.lock);
+        kmem[cid].freelist = r->next;
+    */
+    r = search_freemem(cid);
+    if (!r) {
+        // search free memory from other CPUs
+        for (int i = 0; i < sizeof(&kmem); i++) {
+            if (i == cid) continue;
+            r = search_freemem(i);
+            if (r) break;
+        }
+    }
+    release(&kmem[cid].lock);
 
     if (r)
         memset((char *)r, 5, PGSIZE);  // fill with junk
