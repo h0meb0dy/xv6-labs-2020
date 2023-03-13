@@ -22,14 +22,14 @@ struct run {
 
 struct {
     struct spinlock lock;
-    char lockname[MAX_LOCKNAME_LEN];  // lock name (required by kinit)
+    char lockname[MAX_LOCKNAME_LEN + 1];  // lock name (required by kinit)
     struct run *freelist;
 } kmem[NCPU];  // per-CPU freelists
 
 void kinit() {
     // initlock(&kmem.lock, "kmem");
     for (int i = 0; i < sizeof(&kmem); i++) {
-        snprintf(kmem[i].lockname, sizeof(kmem[i].lockname), "kmem%d", i + 1);  // kmem1, kmem2, kmem3, ...
+        snprintf(kmem[i].lockname, sizeof(kmem[i].lockname) - 1, "kmem%d", i + 1);  // kmem1, kmem2, kmem3, ...
         initlock(&kmem[i].lock, kmem[i].lockname);
     }
     freerange(end, (void *)PHYSTOP);
