@@ -28,7 +28,7 @@ struct {
 
 void kinit() {
     // initlock(&kmem.lock, "kmem");
-    for (int i = 0; i < sizeof(&kmem); i++) {
+    for (int i = 0; i < sizeof(kmem) / sizeof(kmem[0]); i++) {
         snprintf(kmem[i].lockname, sizeof(kmem[i].lockname) - 1, "kmem%d", i + 1);  // kmem1, kmem2, kmem3, ...
         initlock(&kmem[i].lock, kmem[i].lockname);
     }
@@ -89,7 +89,7 @@ kalloc(void) {
     r = search_freemem(cid);
     if (!r) {
         // search free memory from other CPUs
-        for (int i = 0; i < sizeof(&kmem); i++) {
+        for (int i = 0; i < sizeof(kmem) / sizeof(kmem[0]); i++) {
             if (i == cid) continue;
             r = search_freemem(i);
             if (r) break;
