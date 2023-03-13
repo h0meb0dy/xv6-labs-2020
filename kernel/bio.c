@@ -23,7 +23,7 @@
 #include "fs.h"
 #include "buf.h"
 
-#define NBUCKET 11             // number of bcache buckets
+#define NBUCKET 7              // number of bcache buckets
 #define MAX_LOCKNAME_LEN 0x10  // maximum length of lock name
 
 struct {
@@ -62,7 +62,7 @@ void binit(void) {
 
 // calculate bcache index with dev and blockno
 int bcache_idx(uint dev, uint blockno) {
-    return (((uint64)dev << 32) | blockno) % sizeof(&bcache);
+    return (((uint64)dev << 32) | blockno) % (sizeof(bcache) / sizeof(bcache[0]));
 }
 
 // Look through buffer cache for block on device dev.
