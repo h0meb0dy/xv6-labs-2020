@@ -650,3 +650,11 @@ void procdump(void) {
         printf("\n");
     }
 }
+
+// get number of processes
+uint64 get_nproc() {
+    uint64 nproc = 0;
+    for (int i = 0; i < NPROC; i++)
+        if (proc[i].state != UNUSED) nproc++;
+    return nproc;
+}
