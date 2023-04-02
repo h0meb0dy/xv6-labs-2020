@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -43,6 +45,50 @@ void kvminit() {
     // map the trampoline for trap entry/exit to
     // the highest virtual address in the kernel.
     kvmmap(TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
+}
+
+// modified version of kvminit()
+pagetable_t new_kvminit() {
+    pagetable_t pagetable = kalloc();
+    memset(pagetable, 0, PGSIZE);
+
+    // uart registers
+    // kvmmap(UART0, UART0, PGSIZE, PTE_R | PTE_W);
+    if (mappages(pagetable, UART0, PGSIZE, UART0, PTE_R | PTE_W) != 0)
+        panic("mappages");
+
+    // virtio mmio disk interface
+    // kvmmap(VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
+    if (mappages(pagetable, VIRTIO0, PGSIZE, VIRTIO0, PTE_R | PTE_W) != 0)
+        panic("mappages");
+
+    // CLINT
+    // kvmmap(CLINT, CLINT, 0x10000, PTE_R | PTE_W);
+    if (mappages(pagetable, CLINT, 0x10000, CLINT, PTE_R | PTE_W) != 0)
+        panic("mappages");
+
+    // PLIC
+    // kvmmap(PLIC, PLIC, 0x400000, PTE_R | PTE_W);
+    if (mappages(pagetable, PLIC, 0x400000, PLIC, PTE_R | PTE_W) != 0)
+        panic("mappages");
+
+    // map kernel text executable and read-only.
+    // kvmmap(KERNBASE, KERNBASE, (uint64)etext - KERNBASE, PTE_R | PTE_X);
+    if (mappages(pagetable, KERNBASE, (uint64)etext - KERNBASE, KERNBASE, PTE_R | PTE_X) != 0)
+        panic("mappages");
+
+    // map kernel data and the physical RAM we'll make use of.
+    // kvmmap((uint64)etext, (uint64)etext, PHYSTOP - (uint64)etext, PTE_R | PTE_W);
+    if (mappages(pagetable, (uint64)etext, PHYSTOP - (uint64)etext, (uint64)etext, PTE_R | PTE_W) != 0)
+        panic("mappages");
+
+    // map the trampoline for trap entry/exit to
+    // the highest virtual address in the kernel.
+    // kvmmap(TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
+    if (mappages(pagetable, TRAMPOLINE, PGSIZE, (uint64)trampoline, PTE_R | PTE_X) != 0)
+        panic("mappages");
+
+    return pagetable;
 }
 
 // Switch h/w page table register to the kernel's page table,
@@ -123,7 +169,8 @@ kvmpa(uint64 va) {
     pte_t *pte;
     uint64 pa;
 
-    pte = walk(kernel_pagetable, va, 0);
+    // pte = walk(kernel_pagetable, va, 0);
+    pte = walk(myproc()->kpagetable, va, 0);
     if (pte == 0)
         panic("kvmpa");
     if ((*pte & PTE_V) == 0)
@@ -263,7 +310,8 @@ void freewalk(pagetable_t pagetable) {
             freewalk((pagetable_t)child);
             pagetable[i] = 0;
         } else if (pte & PTE_V) {
-            panic("freewalk: leaf");
+            // panic("freewalk: leaf");
+            continue;
         }
     }
     kfree((void *)pagetable);
