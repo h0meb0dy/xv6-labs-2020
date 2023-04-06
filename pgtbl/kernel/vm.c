@@ -494,7 +494,7 @@ void vmprint(pagetable_t pagetable) {
 // copy user page table to kernel page table
 void copypages(pagetable_t upagetable, pagetable_t kpagetable, uint64 start, uint64 end) {
     if (end > PLIC) panic("size too big");
-    printf("%p %p %d\n", start, end, (end - start) / PGSIZE);
+    
     for (uint64 va = start; va < end; va += PGSIZE) {
         pte_t *upte = walk(upagetable, va, 0);
         if (!upte) panic("user PTE not exist");
