@@ -397,6 +397,8 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
 // Copy len bytes to dst from virtual address srcva in a given page table.
 // Return 0 on success, -1 on error.
 int copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len) {
+    return copyin_new(pagetable, dst, srcva, len);
+    /*
     uint64 n, va0, pa0;
 
     while (len > 0) {
@@ -414,6 +416,7 @@ int copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len) {
         srcva = va0 + PGSIZE;
     }
     return 0;
+    */
 }
 
 // Copy a null-terminated string from user to kernel.
@@ -421,6 +424,8 @@ int copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len) {
 // until a '\0', or max.
 // Return 0 on success, -1 on error.
 int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max) {
+    return copyinstr_new(pagetable, dst, srcva, max);
+    /*
     uint64 n, va0, pa0;
     int got_null = 0;
 
@@ -455,6 +460,7 @@ int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max) {
     } else {
         return -1;
     }
+    */
 }
 
 void vmprint(pagetable_t pagetable) {
@@ -482,5 +488,18 @@ void vmprint(pagetable_t pagetable) {
                 printf(".. .. ..%d: pte %p pa %p\n", k, pte, pa3);
             }
         }
+    }
+}
+
+// copy user page table to kernel page table
+void copypages(pagetable_t upagetable, pagetable_t kpagetable, uint64 start, uint64 end) {
+    if (end > PLIC) panic("size too big");
+    printf("%p %p %d\n", start, end, (end - start) / PGSIZE);
+    for (uint64 va = start; va < end; va += PGSIZE) {
+        pte_t *upte = walk(upagetable, va, 0);
+        if (!upte) panic("user PTE not exist");
+        pte_t *kpte = walk(kpagetable, va, 1);
+        if (!kpte) panic("kernel PTE not exist");
+        *kpte = *upte & ~PTE_U;
     }
 }

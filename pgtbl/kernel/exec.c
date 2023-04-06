@@ -114,6 +114,9 @@ int exec(char *path, char **argv) {
     p->trapframe->sp = sp;          // initial stack pointer
     proc_freepagetable(oldpagetable, oldsz);
 
+    // copy user page table to kernel page table
+    copypages(p->pagetable, p->kpagetable, 0, p->sz);
+
     if (p->pid == 1) vmprint(p->pagetable);
 
     return argc;  // this ends up in a0, the first argument to main(argc, argv)

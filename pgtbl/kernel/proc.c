@@ -238,6 +238,9 @@ void userinit(void) {
     uvminit(p->pagetable, initcode, sizeof(initcode));
     p->sz = PGSIZE;
 
+    // copy user page table to kernel page table
+    copypages(p->pagetable, p->kpagetable, 0, p->sz);
+
     // prepare for the very first "return" from kernel to user.
     p->trapframe->epc = 0;      // user program counter
     p->trapframe->sp = PGSIZE;  // user stack pointer
@@ -265,6 +268,10 @@ int growproc(int n) {
         sz = uvmdealloc(p->pagetable, sz, sz + n);
     }
     p->sz = sz;
+
+    // copy user page table to kernel page table
+    copypages(p->pagetable, p->kpagetable, 0, p->sz);
+
     return 0;
 }
 
@@ -289,6 +296,9 @@ int fork(void) {
     np->sz = p->sz;
 
     np->parent = p;
+
+    // copy user page table to kernel page table
+    copypages(np->pagetable, np->kpagetable, 0, np->sz);
 
     // copy saved user registers.
     *(np->trapframe) = *(p->trapframe);
