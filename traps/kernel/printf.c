@@ -124,3 +124,18 @@ void printfinit(void) {
     initlock(&pr.lock, "pr");
     pr.locking = 1;
 }
+
+void backtrace() {
+    printf("backtrace:\n");
+    uint64 fp = r_fp();  // current frame pointer
+
+    while (fp != 0) {
+        uint64 ret = *((uint64 *)fp - 1);
+        if (ret < KERNBASE)  // if not valid kernel address
+        {
+            break;
+        }
+        printf("%p\n", ret);
+        fp = *((uint64 *)fp - 2);
+    }
+}
