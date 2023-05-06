@@ -70,6 +70,7 @@ void usertrap(void) {
     if (which_dev == 2) {
         // yield();
         if (++p->tick_passed == p->alarm_interval) {
+            *p->alarm_trapframe = *p->trapframe; // backup trapframe
             p->trapframe->epc = (uint64)p->alarm_handler;
             p->tick_passed = 0;
         }

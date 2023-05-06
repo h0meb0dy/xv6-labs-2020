@@ -123,6 +123,12 @@ found:
     p->tick_passed = 0;
     p->alarm_handler = 0;
 
+    // for sigreturn
+    if ((p->alarm_trapframe = kalloc()) == 0) {
+        release(&p->lock);
+        return 0;
+    }
+
     return p;
 }
 
@@ -144,6 +150,12 @@ static void freeproc(struct proc *p) {
     p->killed = 0;
     p->xstate = 0;
     p->state = UNUSED;
+
+    // for sigreturn
+    if (p->alarm_trapframe) {
+        kfree(p->alarm_trapframe);
+        p->alarm_trapframe = 0;
+    }
 }
 
 // Create a user page table for a given process,
