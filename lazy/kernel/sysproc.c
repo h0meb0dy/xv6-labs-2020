@@ -46,7 +46,10 @@ sys_sbrk(void) {
     // if (growproc(n) < 0)
     //     return -1;
     addr = p->sz; // old size
-    p->sz += n;   // increment process size
+    p->sz += n;   // increment (or decrement) process size
+    if (n < 0) {
+        uvmunmap(p->pagetable, PGROUNDDOWN(p->sz), (addr - PGROUNDDOWN(p->sz)) / PGSIZE, 1);
+    }
     return addr;
 }
 
