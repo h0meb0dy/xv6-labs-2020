@@ -64,9 +64,9 @@ void usertrap(void) {
     } else if (r_scause() == 13 || r_scause() == 15) {
         uint64 va = PGROUNDDOWN(r_stval()); // address of faulted page
         char *mem = kalloc();
-        if (!mem)
+        if (!mem) {
             p->killed = 1;
-        else {
+        } else {
             memset(mem, 0, PGSIZE);
             if (mappages(p->pagetable, va, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U)) {
                 kfree(mem);
