@@ -66,8 +66,10 @@ void kvminithart() {
 //    0..11 -- 12 bits of byte offset within the page.
 pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc) {
-    if (va >= MAXVA)
-        panic("walk");
+    if (va >= MAXVA) {
+        // panic("walk");
+        return 0;
+    }
 
     for (int level = 2; level > 0; level--) {
         pte_t *pte = &pagetable[PX(level, va)];
@@ -173,9 +175,12 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free) {
             panic("uvmunmap: not mapped");
         if (PTE_FLAGS(*pte) == PTE_V)
             panic("uvmunmap: not a leaf");
+        uint64 pa = PTE2PA(*pte);
+        dec_refcnt(pa);
         if (do_free) {
-            uint64 pa = PTE2PA(*pte);
-            kfree((void *)pa);
+            if (!get_refcnt(pa)) {
+                kfree((void *)pa);
+            }
         }
         *pte = 0;
     }
@@ -296,10 +301,14 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
             panic("uvmcopy: page not present");
         pa = PTE2PA(*pte);
         flags = PTE_FLAGS(*pte);
-        if ((mem = kalloc()) == 0)
-            goto err;
-        memmove(mem, (char *)pa, PGSIZE);
-        if (mappages(new, i, PGSIZE, (uint64)mem, flags) != 0) {
+        *pte &= ~PTE_W;  // remove write permission
+        *pte |= PTE_COW; // add COW mapping flag
+        // if ((mem = kalloc()) == 0)
+        //     goto err;
+        // memmove(mem, (char *)pa, PGSIZE);
+        mem = (void *)pa;
+        inc_refcnt((uint64)mem);
+        if (mappages(new, i, PGSIZE, (uint64)mem, (flags & ~PTE_W) | PTE_COW) != 0) {
             kfree(mem);
             goto err;
         }
@@ -330,9 +339,34 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
 
     while (len > 0) {
         va0 = PGROUNDDOWN(dstva);
-        pa0 = walkaddr(pagetable, va0);
+        // pa0 = walkaddr(pagetable, va0);
+        pte_t *pte = walk(pagetable, va0, 0);
+        if (!pte) {
+            return -1;
+        }
+        pa0 = PTE2PA(*pte);
         if (pa0 == 0)
             return -1;
+
+        if (*pte & PTE_COW) {
+            uint64 flags = PTE_FLAGS(*pte);
+            *pte |= PTE_W;    // restore write permission
+            *pte &= ~PTE_COW; // remove COW mapping flag
+
+            void *mem = kalloc();
+            if (!mem) {
+                return 0;
+            }
+            memmove(mem, (void *)pa0, PGSIZE);
+            pa0 = (uint64)mem;
+
+            uvmunmap(pagetable, va0, 1, 1);
+            if (mappages(pagetable, va0, PGSIZE, (uint64)mem, (flags & ~PTE_COW) | PTE_W)) {
+                kfree(mem);
+                uvmunmap(pagetable, va0, 1, 1);
+            }
+        }
+
         n = PGSIZE - (dstva - va0);
         if (n > len)
             n = len;
