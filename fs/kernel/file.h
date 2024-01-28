@@ -1,3 +1,5 @@
+#include "param.h"
+
 struct file {
     enum { FD_NONE,
            FD_PIPE,
@@ -31,6 +33,8 @@ struct inode {
     uint size;
     // uint addrs[NDIRECT + 1];
     uint addrs[NDIRECT + 2];
+
+    char symlink_target[MAXPATH + 1];
 };
 
 // map major device number to device functions.

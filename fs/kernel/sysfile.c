@@ -304,6 +304,24 @@ sys_open(void) {
         }
     }
 
+    /* handle symbolic link */
+    int depth = 0;
+    while (ip->type == T_SYMLINK && !(omode & O_NOFOLLOW)) {
+        if (depth++ >= 10) {
+            /* symbolic link cycle */
+            iunlockput(ip);
+            end_op();
+            return -1;
+        }
+        iunlockput(ip);
+        if(!(ip = namei(ip->symlink_target))) {
+            /* target doesn't exist */
+            end_op();
+            return -1;
+        }
+        ilock(ip);
+    }
+
     if (ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)) {
         iunlockput(ip);
         end_op();
@@ -465,5 +483,31 @@ sys_pipe(void) {
         fileclose(wf);
         return -1;
     }
+    return 0;
+}
+
+uint64 sys_symlink(void) {
+    char target[MAXPATH];     // target file path
+    char symlink[MAXPATH];    // symbolic link file path
+    struct inode *symlink_ip; // symbolic link file inode
+
+    /* fetch arguments */
+    if (argstr(0, target, MAXPATH) < 0 || argstr(1, symlink, MAXPATH) < 0) {
+        return -1;
+    }
+
+    begin_op();
+
+    /* create symbolic link */
+    if (!(symlink_ip = create(symlink, T_SYMLINK, 0, 0))) {
+        end_op();
+        return -1;
+    }
+
+    memmove(symlink_ip->symlink_target, target, MAXPATH);
+
+    iunlockput(symlink_ip);
+    end_op();
+
     return 0;
 }
