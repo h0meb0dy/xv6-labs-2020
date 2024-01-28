@@ -379,6 +379,36 @@ bmap(struct inode *ip, uint bn) {
         brelse(bp);
         return addr;
     }
+    bn -= NINDIRECT;
+
+    /* map doubly-indirect block */
+    /* bn == NINDIRECT * single_idx + double_idx */
+    uint single_idx = bn / NINDIRECT;
+    uint double_idx = bn % NINDIRECT;
+
+    if (single_idx < NINDIRECT) {
+        if ((addr = ip->addrs[NDIRECT + 1]) == 0) {
+            ip->addrs[NDIRECT + 1] = addr = balloc(ip->dev);
+        }
+
+        bp = bread(ip->dev, addr);
+        a = (uint *)bp->data;
+        if ((addr = a[single_idx]) == 0) {
+            a[single_idx] = addr = balloc(ip->dev);
+            log_write(bp);
+        }
+        brelse(bp);
+
+        bp = bread(ip->dev, addr);
+        a = (uint *)bp->data;
+        if ((addr = a[double_idx]) == 0) {
+            a[double_idx] = addr = balloc(ip->dev);
+            log_write(bp);
+        }
+        brelse(bp);
+
+        return addr;
+    }
 
     panic("bmap: out of range");
 }
