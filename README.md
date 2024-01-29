@@ -9,3 +9,6 @@ Solutions for [MIT 6.S081 (Fall 2020)](https://pdos.csail.mit.edu/6.S081/2020/in
 5. [lazy](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-xv6-lazy-page-allocation)
 6. [cow](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-Copy-on-Write-Fork-for-xv6)
 7. [thread](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-Multithreading)
+8. [lock](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-locks)
+9. [fs](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-file-system)
+10. [mmap](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-mmap)
