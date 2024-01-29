@@ -5,6 +5,9 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "sleeplock.h"
+#include "fs.h"
+#include "file.h"
 
 struct spinlock tickslock;
 uint ticks;
@@ -61,6 +64,36 @@ void usertrap(void) {
         syscall();
     } else if ((which_dev = devintr()) != 0) {
         // ok
+    } else if (r_scause() == 13 || r_scause() == 15) {
+        struct vma *v = 0;
+        void *va = 0;
+
+        /* check if fault is caused by lazy allocation in sys_mmap() */
+        for (int i = 0; i < sizeof(p->vma) / sizeof(p->vma[0]); i++) {
+            void *fault_addr = (void *)r_stval(); // faulted address
+            if (p->vma[i].used && p->vma[i].addr <= fault_addr && fault_addr < p->vma[i].addr + p->vma[i].length) {
+                v = &p->vma[i];
+                va = (void *)PGROUNDDOWN((uint64)fault_addr);
+                break;
+            }
+        }
+        if (!va) {
+            exit(-1);
+        }
+
+        /* allocate VMA (really) */
+        char *mem = kalloc();
+        if (!mem) {
+            exit(-1);
+        }
+        memset(mem, 0, PGSIZE);
+        if (mappages(p->pagetable, (uint64)va, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U) != 0) {
+            kfree(mem);
+            exit(-1);
+        }
+
+        /* copy a page from file */
+        readi(v->f->ip, 0, (uint64)mem, va - v->addr, PGSIZE);
     } else {
         printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
         printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());

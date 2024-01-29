@@ -283,6 +283,11 @@ int fork(void) {
 
     np->state = RUNNABLE;
 
+    /* copy VMA list */
+    for (int i = 0; i < sizeof(p->vma) / sizeof(p->vma[0]); i++) {
+        np->vma[i] = p->vma[i];
+    }
+
     release(&np->lock);
 
     return pid;

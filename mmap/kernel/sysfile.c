@@ -467,3 +467,100 @@ sys_pipe(void) {
     }
     return 0;
 }
+
+uint64 sys_mmap(void) {
+    void *addr;
+    int length, prot, flags, fd, offset;
+
+    /* fetch arguments */
+    if (argaddr(0, (void *)&addr) || argint(1, &length) || argint(2, &prot) || argint(3, &flags) || argint(4, &fd) || argint(5, &offset)) {
+        return -1;
+    }
+    if (addr || offset || length <= 0) {
+        return -1;
+    }
+
+    struct proc *p = myproc();
+    struct file *f = filedup(p->ofile[fd]);
+
+    /* if file is read-only and WRITE permission is set and MAP_SHARED flag is set, mmap fails */
+    if (!f->writable && prot & PROT_WRITE && flags & MAP_SHARED) {
+        fileclose(f);
+        return -1;
+    }
+
+    /* find unused VMA */
+    struct vma *v = 0;
+    for (int i = 0; i < sizeof(p->vma) / sizeof(p->vma[0]); i++) {
+        if (!p->vma[i].used) {
+            v = &p->vma[i];
+            break;
+        }
+    }
+    if (!v) {
+        return -1; // if VMA list is full, mmap fails
+    }
+
+    /* allocate VMA (lazily) */
+    v->addr = (void *)p->sz;
+    v->length = length;
+    p->sz += PGROUNDUP(length);
+    v->prot = prot;
+    v->flag = flags;
+    v->f = filedup(p->ofile[fd]);
+    v->used = 1;
+
+    return (uint64)v->addr;
+}
+
+uint64 sys_munmap(void) {
+    void *addr;
+    int length;
+
+    /* fetch arguments */
+    if (argaddr(0, (void *)&addr) || argint(1, &length)) {
+        return -1;
+    }
+
+    struct proc *p = myproc();
+    struct vma *v = 0;
+    void *va = 0;
+
+    /* find corresponded VMA */
+    for (int i = 0; i < sizeof(p->vma) / sizeof(p->vma[0]); i++) {
+        if (p->vma[i].used && p->vma[i].addr <= addr && addr < p->vma[i].addr + p->vma[i].length) {
+            v = &p->vma[i];
+            va = (void *)PGROUNDDOWN((uint64)addr);
+            break;
+        }
+    }
+    if (!v) {
+        return -1;
+    }
+    length = PGROUNDUP((uint64)addr + length) - (uint64)va; // alignment
+
+    if (va != v->addr && va + length != v->addr + v->length) {
+        return -1; // munmap cannot punch a hole in VMA
+    }
+
+    /* deallocate VMA */
+    for (addr = va; addr < va + length; addr += PGSIZE) {
+        if (v->flag & MAP_SHARED) {
+            // if MAP_SHARED flag is set, reflect changes to file
+            filewrite(v->f, (uint64)addr, PGSIZE);
+        }
+        uvmunmap(p->pagetable, (uint64)addr, 1, 1);
+        v->length -= PGSIZE;
+    }
+    if (va == v->addr) {
+        // if unmap from the start, modify address of VMA
+        v->addr += length;
+    }
+    if (!v->length) {
+        // if whole VMA is deallocated, decrease reference count of file and mark as not-used
+        fileclose(v->f);
+        v->used = 0;
+    }
+
+    return 0;
+}

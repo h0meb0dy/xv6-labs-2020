@@ -86,6 +86,15 @@ enum procstate { UNUSED,
                  RUNNING,
                  ZOMBIE };
 
+struct vma {
+    void *addr;     // address
+    int length;     // length
+    int prot;       // permission
+    int flag;       // flag
+    struct file *f; // file
+    int used;       // 1 if used
+};
+
 // Per-process state
 struct proc {
     struct spinlock lock;
@@ -107,4 +116,6 @@ struct proc {
     struct file *ofile[NOFILE];  // Open files
     struct inode *cwd;           // Current directory
     char name[16];               // Process name (debugging)
+
+    struct vma vma[16]; // VMA list
 };
