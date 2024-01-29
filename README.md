@@ -12,3 +12,4 @@ Solutions for [MIT 6.S081 (Fall 2020)](https://pdos.csail.mit.edu/6.S081/2020/in
 8. [lock](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-locks)
 9. [fs](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-file-system)
 10. [mmap](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-mmap)
+11. [net](https://h0meb0dy.me/entry/MIT-6S081-Fall-2020-Lab-networking)
