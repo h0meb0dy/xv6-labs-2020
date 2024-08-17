@@ -4,7 +4,7 @@
 
 ## Large files
 
-`struct dinode`의 `addrs`에서 원래 direct block 12개, indirect block 1개였던 것을 direct block 11개, indirect block 2개로 바꿔야 하므로, `NDIRECT`, `struct dinode`, `struct inode`의 정의를 수정합니다.
+`struct dinode`의 `addrs`에서 원래 direct block 12개, indirect block 1개였던 것을 direct block 11개, indirect block 2개로 바꿔야 하므로, `NDIRECT`, `struct dinode`, `struct inode`의 정의를 수정한다.
 
 ```c
 /* kernel/fs.h */
@@ -32,7 +32,7 @@ struct inode {
 };
 ```
 
-`NDIRECT`는 1 감소하였고, doubly-indirect block을 만들어서 `NINDIRECT * NINDIRECT`만큼 block을 더 할당할 수 있기 때문에, 이에 맞게 `fs.h`에서 `MAXFILE`의 정의를 수정합니다.
+`NDIRECT`는 1 감소하였고, doubly-indirect block을 만들어서 `NINDIRECT * NINDIRECT`만큼 block을 더 할당할 수 있기 때문에, 이에 맞게 `fs.h`에서 `MAXFILE`의 정의를 수정한다.
 
 ```c
 /* kernel/fs.h */
@@ -41,7 +41,7 @@ struct inode {
 #define MAXFILE (NDIRECT + NINDIRECT + NINDIRECT * NINDIRECT)
 ```
 
-`bmap()`에 doubly-indirect block을 할당하는 코드를 추가합니다.
+`bmap()`에 doubly-indirect block을 할당하는 코드를 추가한다.
 
 ```c
 /* kernel/fs.c */
@@ -88,7 +88,7 @@ bmap(struct inode *ip, uint bn) {
 
 ## Symbolic links
 
-`symlinktest`를 `Makefile`에 추가합니다.
+`symlinktest`를 `Makefile`에 추가한다.
 
 ```makefile
 # Makefile
@@ -98,7 +98,7 @@ UPROGS=\
 	$U/_symlinktest\
 ```
 
-`symlink` system call에 필요한 선언과 정의들을 추가합니다.
+`symlink` system call에 필요한 선언과 정의들을 추가한다.
 
 ```c
 /* kernel/syscall.h */
@@ -136,7 +136,7 @@ entry("fork");
 entry("symlink");
 ```
 
-필요한 flag들도 정의합니다.
+필요한 flag들도 정의한다.
 
 ```c
 /* kernel/stat.h */
@@ -154,7 +154,7 @@ entry("symlink");
 #define O_NOFOLLOW 0x800
 ```
 
-Symbolic link 파일이 원본 파일의 이름을 참조해서 따라갈 수 있도록 `struct inode`에 원본 파일의 이름을 저장하는 `symlink_target`을 추가합니다.
+Symbolic link 파일이 원본 파일의 이름을 참조해서 따라갈 수 있도록 `struct inode`에 원본 파일의 이름을 저장하는 `symlink_target`을 추가한다.
 
 ```c
 /* kernel/file.h */
@@ -168,7 +168,7 @@ struct inode {
 };
 ```
 
-`symlink` system call의 구현체인 `sys_symlink()` 함수를 정의합니다. Target file name과 symbolic link file name을 인자로 받아서 symbolic link file을 생성하고 inode의 `symlink_target`에 target file name을 저장합니다.
+`symlink` system call의 구현체인 `sys_symlink()` 함수를 정의한다. Target file name과 symbolic link file name을 인자로 받아서 symbolic link file을 생성하고 inode의 `symlink_target`에 target file name을 저장한다.
 
 ```c
 /* kernel/sysfile.c */
@@ -200,7 +200,7 @@ uint64 sys_symlink(void) {
 }
 ```
 
-`sys_open()`에 symbolic link file을 처리하는 코드를 추가합니다. `type`이 `T_SYMLINK`인 파일을 인자로 받고 `O_NOFOLLOW` 옵션이 걸려 있지 않은 경우, `symlink_target`을 참조하여 원본 파일의 inode를 가져옵니다. 이때 symbolic link끼리 cycle을 형성하고 있는 경우가 있을 수 있으므로 `depth`가 10이 되면 error를 반환합니다.
+`sys_open()`에 symbolic link file을 처리하는 코드를 추가한다. `type`이 `T_SYMLINK`인 파일을 인자로 받고 `O_NOFOLLOW` 옵션이 걸려 있지 않은 경우, `symlink_target`을 참조하여 원본 파일의 inode를 가져온다. 이때 symbolic link끼리 cycle을 형성하고 있는 경우가 있을 수 있으므로 `depth`가 10이 되면 error를 반환한다.
 
 ```c
 /* kernel/sysfile.c */
