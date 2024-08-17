@@ -2,7 +2,7 @@
 
 > https://pdos.csail.mit.edu/6.S081/2020/labs/mmap.html
 
-`Makefile`에 `mmaptest`를 추가합니다.
+`Makefile`에 `mmaptest`를 추가한다.
 
 ```makefile
 # Makefile
@@ -12,7 +12,7 @@ UPROGS=\
 	$U/_mmaptest\
 ```
 
-`mmap`과 `munmap` system call에 필요한 선언과 정의들을 추가합니다.
+`mmap`과 `munmap` system call에 필요한 선언과 정의들을 추가한다.
 
 ```c
 /* kernel/syscall.h */
@@ -55,7 +55,7 @@ entry("mmap");
 entry("munmap");
 ```
 
-`struct vma`를 정의하고, `struct proc`에 VMA list를 추가합니다.
+`struct vma`를 정의하고, `struct proc`에 VMA list를 추가한다.
 
 ```c
 /* kernel/proc.h */
@@ -76,7 +76,7 @@ struct proc {
 };
 ```
 
-`sys_mmap()`을 구현합니다.
+`sys_mmap()`을 구현한다.
 
 ```c
 /* kernel/sysfile.c */
@@ -119,7 +119,7 @@ uint64 sys_mmap(void) {
 }
 ```
 
-`usertrap()`에서 `sys_mmap()`의 lazy allocation으로 인해 발생하는 fault를 처리합니다.
+`usertrap()`에서 `sys_mmap()`의 lazy allocation으로 인해 발생하는 fault를 처리한다.
 
 ```c
 /* kernel/trap.c */
@@ -169,7 +169,7 @@ void usertrap(void) {
 }
 ```
 
-다음으로 `sys_munmap()`을 구현합니다.
+다음으로 `sys_munmap()`을 구현한다.
 
 ```c
 /* kernel/sysfile.c */
@@ -223,7 +223,7 @@ uint64 sys_munmap(void) {
 }
 ```
 
-`uvmunmap()`에서 실제로 map되지 않은 (lazy allocation) page를 unmap하려고 시도할 때 발생하는 panic을 제거합니다.
+`uvmunmap()`에서 실제로 map되지 않은 (lazy allocation) page를 unmap하려고 시도할 때 발생하는 panic을 제거한다.
 
 ```c
 /* kernel/vm.c */
@@ -240,7 +240,7 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free) {
 }
 ```
 
-`MAP_SHARED` flag가 활성화되어 있을 경우, 수정 사항이 원본 파일에 반영되어야 합니다. 따라서 `sys_munmap()`에서 `uvmunmap()`을 호출하기 전에 page의 내용을 파일에 쓰도록 수정합니다.
+`MAP_SHARED` flag가 활성화되어 있을 경우, 수정 사항이 원본 파일에 반영되어야 한다. 따라서 `sys_munmap()`에서 `uvmunmap()`을 호출하기 전에 page의 내용을 파일에 쓰도록 수정한다.
 
 ```c
 /* kernel/sysfile.c */
@@ -260,7 +260,7 @@ uint64 sys_munmap(void) {
 }
 ```
 
-`mmaptest`에서 read-only로 열린 파일에 대하여 `PROT_WRITE` 권한과 `MAP_SHARED` 플래그를 설정하는 경우를 테스트합니다.
+`mmaptest`에서 read-only로 열린 파일에 대하여 `PROT_WRITE` 권한과 `MAP_SHARED` 플래그를 설정하는 경우를 테스트한다.
 
 ```c
 /* user/mmaptest.c */
@@ -276,7 +276,7 @@ mmap_test(void)
 }
 ```
 
-이 경우에는 수정 사항이 원본 파일에 반영될 수 없으므로 `mmap`이 실패하도록 수정합니다.
+이 경우에는 수정 사항이 원본 파일에 반영될 수 없으므로 `mmap`이 실패하도록 수정한다.
 
 ```c
 /* kernel/sysfile.c */
@@ -298,7 +298,7 @@ uint64 sys_mmap(void) {
 }
 ```
 
-Lazy allocation으로 인해 `uvmcopy()`에서 발생하는 panic을 제거합니다.
+Lazy allocation으로 인해 `uvmcopy()`에서 발생하는 panic을 제거한다.
 
 ```c
 /* kernel/vm.c */
@@ -316,7 +316,7 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
 }
 ```
 
-`fork()`에 VMA list를 복사하는 코드를 추가합니다.
+`fork()`에 VMA list를 복사하는 코드를 추가한다.
 
 ```c
 /* kernel/proc.c */
