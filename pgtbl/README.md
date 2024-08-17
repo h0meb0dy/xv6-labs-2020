@@ -4,11 +4,11 @@
 
 ## Print a page table ([easy](https://pdos.csail.mit.edu/6.S081/2020/labs/guidance.html))
 
-Page table에 존재하는 모든 PTE와 그에 해당하는 physical address를 출력하는 `vmprint()` 함수를 구현하는 실습입니다.
+Page table에 존재하는 모든 PTE와 그에 해당하는 physical address를 출력하는 `vmprint()` 함수를 구현하는 실습이다.
 
 ### Add vmprint() in exec()
 
-`exec()`이 리턴하기 직전에 `vmprint()`를 호출하여 첫 번째 프로세스(`pid == 1`)의 page table을 출력합니다.
+`exec()`이 리턴하기 직전에 `vmprint()`를 호출하여 첫 번째 프로세스(`pid == 1`)의 page table을 출력한다.
 
 ```c
 int exec(char *path, char **argv) {
@@ -20,7 +20,7 @@ int exec(char *path, char **argv) {
 }
 ```
 
-`exec()`에서 `vmprint()`를 호출할 수 있도록 `defs.h`에 추가합니다.
+`exec()`에서 `vmprint()`를 호출할 수 있도록 `defs.h`에 추가한다.
 
 ```c
 // vm.c
@@ -30,7 +30,7 @@ void vmprint(pagetable_t);
 
 ### Implement vmprint()
 
-3개의 레벨로 구성된 page table을 탐색하며 존재하는 모든 PTE와 그에 해당하는 physical address를 출력합니다.
+3개의 레벨로 구성된 page table을 탐색하며 존재하는 모든 PTE와 그에 해당하는 physical address를 출력한다.
 
 ```c
 void vmprint(pagetable_t pagetable) {
@@ -72,13 +72,13 @@ make GRADEFLAGS=printout grade
 
 ## A kernel page table per process ([hard](https://pdos.csail.mit.edu/6.S081/2020/labs/guidance.html))
 
-이 실습과 다음 실습의 최종적인 목표는 kernel이 user pointer를 참조해야 할 때 physical address로 translate하는 과정을 생략하여 더 효율적으로 만드는 것입니다. 그러려면 kernel page table에 user memory에 대한 mapping을 추가해야 하는데, user memory는 각 프로세스별로 virtual address로 관리되기 때문에 주소들이 중복되고, 따라서 하나의 kernel page table에 모두 mapping할 수는 없습니다.
+이 실습과 다음 실습의 최종적인 목표는 kernel이 user pointer를 참조해야 할 때 physical address로 translate하는 과정을 생략하여 더 효율적으로 만드는 것이다. 그러려면 kernel page table에 user memory에 대한 mapping을 추가해야 하는데, user memory는 각 프로세스별로 virtual address로 관리되기 때문에 주소들이 중복되고, 따라서 하나의 kernel page table에 모두 mapping할 수는 없다.
 
-따라서 이 실습에서는 실제 kernel page table과 연동되는 복사본을 각 프로세스에 추가하고, 다음 실습에서는 각 프로세스가 가지고 있는 kernel page table의 복사본에 그 프로세스의 user memory에 대한 mapping을 추가합니다. 이를 통해 최종적인 목표를 달성할 수 있습니다.
+따라서 이 실습에서는 실제 kernel page table과 연동되는 복사본을 각 프로세스에 추가하고, 다음 실습에서는 각 프로세스가 가지고 있는 kernel page table의 복사본에 그 프로세스의 user memory에 대한 mapping을 추가한다. 이를 통해 최종적인 목표를 달성할 수 있다.
 
 ### Add kernel page table to process
 
-`proc.h`의 `struct proc` 구조체에 kernel page table을 나타내는 `kpagetable` 필드를 추가합니다.
+`proc.h`의 `struct proc` 구조체에 kernel page table을 나타내는 `kpagetable` 필드를 추가한다.
 
 ```c
 struct proc {
@@ -89,7 +89,7 @@ struct proc {
 
 ### Initialize kernel page table of process
 
-`vm.c`에 정의된 `kvminit()`은 전역 변수 `kernel_pagetable`에 kernel page table을 할당하고 초기화합니다. 각 프로세스가 가진 kernel page table의 복사본도 같은 방식으로 초기화해주기 위해, 새로운 kernel page table을 할당하고 초기화한 후 반환하는 `new_kvminit()`을 정의합니다. `kvmmap()`은 page table을 인자로 받지 않기 때문에 그 대신 함수 내부 구현을 참고하여 `mappages()`를 사용해야 합니다.
+`vm.c`에 정의된 `kvminit()`은 전역 변수 `kernel_pagetable`에 kernel page table을 할당하고 초기화한다. 각 프로세스가 가진 kernel page table의 복사본도 같은 방식으로 초기화해주기 위해, 새로운 kernel page table을 할당하고 초기화한 후 반환하는 `new_kvminit()`을 정의한다. `kvmmap()`은 page table을 인자로 받지 않기 때문에 그 대신 함수 내부 구현을 참고하여 `mappages()`를 사용해야 한다.
 
 ```c
 // modified version of kvminit()
@@ -137,7 +137,7 @@ pagetable_t new_kvminit() {
 }
 ```
 
-`defs.h`에 `new_kvminit()`을 추가합니다.
+`defs.h`에 `new_kvminit()`을 추가한다.
 
 ```c
 // vm.c
@@ -145,7 +145,7 @@ pagetable_t new_kvminit() {
 pagetable_t new_kvminit();
 ```
 
-`allocproc()`에 `new_kvminit()`으로 kernel page table을 할당하는 코드를 추가합니다.
+`allocproc()`에 `new_kvminit()`으로 kernel page table을 할당하는 코드를 추가한다.
 
 ```c
 static struct proc *
@@ -167,7 +167,7 @@ allocproc(void) {
 
 ### Allocate kernel stack in kernel page table of process
 
-`procinit()`에 kernel stack을 할당하는 코드가 있습니다. 이 코드를 `allocproc()`으로 옮겨서 kernel stack이 각 프로세스의 kernel page table에 할당되도록 합니다.
+`procinit()`에 kernel stack을 할당하는 코드가 있다. 이 코드를 `allocproc()`으로 옮겨서 kernel stack이 각 프로세스의 kernel page table에 할당되도록 한다.
 
 ```c
 void procinit(void) {
@@ -209,7 +209,7 @@ allocproc(void) {
 
 ### Control satp
 
-`kvminithart()`는 `satp` 레지스터의 값을 kernel page table의 주소로 복구하는 함수입니다. `scheduler()`에서 프로세스가 실행될 때 `satp` 레지스터에 프로세스의 kernel page table의 주소를 저장하고, 프로세스 실행이 종료될 때 `kvminithart()`를 호출하여 `satp`가 다시 kernel page table의 주소를 저장하도록 합니다.
+`kvminithart()`는 `satp` 레지스터의 값을 kernel page table의 주소로 복구하는 함수이다. `scheduler()`에서 프로세스가 실행될 때 `satp` 레지스터에 프로세스의 kernel page table의 주소를 저장하고, 프로세스 실행이 종료될 때 `kvminithart()`를 호출하여 `satp`가 다시 kernel page table의 주소를 저장하도록 한다.
 
 ```c
 void scheduler(void) {
@@ -230,7 +230,7 @@ void scheduler(void) {
 
 ### Make kvmpa() reference kernel page table of process
 
-`kvmpa()`에서 kernel virtual address를 physical address로 변환할 때 프로세스의 kernel page table을 참조하도록 합니다.
+`kvmpa()`에서 kernel virtual address를 physical address로 변환할 때 프로세스의 kernel page table을 참조하도록 한다.
 
 ```c
 uint64
@@ -242,7 +242,7 @@ kvmpa(uint64 va) {
 }
 ```
 
-`vm.c`에서 `myproc()`을 사용하기 위해 필요한 헤더 파일을 include합니다.
+`vm.c`에서 `myproc()`을 사용하기 위해 필요한 헤더 파일을 include한다.
 
 ```c
 ...
@@ -252,7 +252,7 @@ kvmpa(uint64 va) {
 
 ### Free kernel page table of process
 
-`allocproc()`에서 할당한 kernel page table과 kernel stack들은 `freeproc()`에서 할당 해제해주어야 합니다. `uvmunmap()`으로 `p->kstack`을 해제하고, `freewalk()`로 `p->kpagetable`을 해제합니다.
+`allocproc()`에서 할당한 kernel page table과 kernel stack들은 `freeproc()`에서 할당 해제해주어야 한다. `uvmunmap()`으로 `p->kstack`을 해제하고, `freewalk()`로 `p->kpagetable`을 해제한다.
 
 ```c
 static void
@@ -269,7 +269,7 @@ freeproc(struct proc *p) {
 }
 ```
 
-`freewalk()`에서 발생하는 `panic: freewalk: leaf`를 주석 처리합니다.
+`freewalk()`에서 발생하는 `panic: freewalk: leaf`를 주석 처리한다.
 
 ```c
 void freewalk(pagetable_t pagetable) {
@@ -292,11 +292,11 @@ make GRADEFLAGS=usertests grade
 
 ## Simplify copyin/copyinstr ([hard](https://pdos.csail.mit.edu/6.S081/2020/labs/guidance.html))
 
-`copyin()`과 `copyinstr()`은 user space에서 kernel space로 데이터를 복사하는 함수입니다. Source의 virtual address로부터 page table을 탐색하여 physical address를 구하고, physical address에 저장된 데이터를 가져옵니다. 하지만 함수가 호출될 때마다 page table을 탐색하는 것은 비효율적이므로, `vmcopyin.c`에 새롭게 정의된 `copyin_new()`와 `copyinstr_new()`에서는 `memmove()`로 `srcva`에서 `dst`로 직접 데이터를 복사합니다. 이 실습의 목표는 프로세스의 kernel page table에 user virtual address와 physical address의 mapping을 저장하여 `copyin()`을 `copyin_new()`로, `copyinstr()`을 `copyinstr_new()`로 대체했을 때 문제없이 작동하도록 하는 것입니다.
+`copyin()`과 `copyinstr()`은 user space에서 kernel space로 데이터를 복사하는 함수이다. Source의 virtual address로부터 page table을 탐색하여 physical address를 구하고, physical address에 저장된 데이터를 가져온다. 하지만 함수가 호출될 때마다 page table을 탐색하는 것은 비효율적이므로, `vmcopyin.c`에 새롭게 정의된 `copyin_new()`와 `copyinstr_new()`에서는 `memmove()`로 `srcva`에서 `dst`로 직접 데이터를 복사한다. 이 실습의 목표는 프로세스의 kernel page table에 user virtual address와 physical address의 mapping을 저장하여 `copyin()`을 `copyin_new()`로, `copyinstr()`을 `copyinstr_new()`로 대체했을 때 문제없이 작동하도록 하는 것이다.
 
 ### Replace copyin() with copyin_new()
 
-`copyin()`과 `copyinstr()`의 구현을 제거하고 각각 `copyin_new()`와 `copyinstr_new()`를 호출하는 것으로 대체합니다.
+`copyin()`과 `copyinstr()`의 구현을 제거하고 각각 `copyin_new()`와 `copyinstr_new()`를 호출하는 것으로 대체한다.
 
 ```c
 // Copy from user to kernel.
@@ -321,7 +321,7 @@ int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max) {
 }
 ```
 
-`vm.c`에서 `copyin_new()`와 `copyinstr_new()`를 참조할 수 있도록 `defs.h`에 추가합니다.
+`vm.c`에서 `copyin_new()`와 `copyinstr_new()`를 참조할 수 있도록 `defs.h`에 추가한다.
 
 ```c
 // vm.c
@@ -334,7 +334,7 @@ int copyinstr_new(pagetable_t, char*, uint64, uint64);
 
 ### Copy PTEs in user page table to kernel page table of process
 
-`vm.c`에 `copypages()` 함수를 구현합니다. 이 함수는 user page table의 PTE들을 프로세스의 kernel page table로 복사합니다.
+`vm.c`에 `copypages()` 함수를 구현한다. 이 함수는 user page table의 PTE들을 프로세스의 kernel page table로 복사한다.
 
 ```c
 // copy user page table to kernel page table
@@ -351,7 +351,7 @@ void copypages(pagetable_t upagetable, pagetable_t kpagetable, uint64 start, uin
 }
 ```
 
-`defs.h`에 `copypages()`를 추가합니다.
+`defs.h`에 `copypages()`를 추가한다.
 
 ```c
 // vm.c
@@ -359,7 +359,7 @@ void copypages(pagetable_t upagetable, pagetable_t kpagetable, uint64 start, uin
 void copypages(pagetable_t, pagetable_t, uint64, uint64);
 ```
 
-Page table을 건드리는 함수는 `userinit()`, `growproc()`, `fork()`, `exec()`이 있습니다. 이 함수들에서 `copypages()`를 호출하여 변동사항을 kernel page table에 반영하도록 합니다.
+Page table을 건드리는 함수는 `userinit()`, `growproc()`, `fork()`, `exec()`이 있다. 이 함수들에서 `copypages()`를 호출하여 변동사항을 kernel page table에 반영하도록 한다.
 
 ```c
 void userinit(void) {
@@ -408,7 +408,7 @@ int exec(char *path, char **argv) {
 
 ### Test
 
-`usertests`에서 timeout이 뜹니다. `copypages()`에서 user page table에 변동사항이 있는지 검사하지 않고 그냥 무조건 복사해서 시간이 오래 걸리기 때문인데, dirty bit를 추가하여 변동사항이 있는 page만 복사하도록 하면 시간을 줄일 수 있지만 귀찮아서(...) 그냥 `grade-lab-pgtbl` 스크립트의 timeout을 600초로 늘려서 통과했습니다.
+`usertests`에서 timeout이 뜬다. `copypages()`에서 user page table에 변동사항이 있는지 검사하지 않고 그냥 무조건 복사해서 시간이 오래 걸리기 때문인데, dirty bit를 추가하여 변동사항이 있는 page만 복사하도록 하면 시간을 줄일 수 있지만 귀찮아서(...) 그냥 `grade-lab-pgtbl` 스크립트의 timeout을 600초로 늘려서 통과했다.
 
 ```python
 @test(0, "usertests")
