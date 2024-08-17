@@ -4,7 +4,7 @@
 
 ## Memory allocator
 
-`kmem`을 CPU의 개수(`NCPU`)만큼의 element들을 갖는 배열로 수정합니다.
+`kmem`을 CPU의 개수(`NCPU`)만큼의 element들을 갖는 배열로 수정한다.
 
 ```c
 /* kernel/kalloc.c */
@@ -15,7 +15,7 @@ struct {
 } kmem[NCPU];
 ```
 
-CPU마다 lock name을 다르게 만들어야 하므로, `kmem` 구조체에 `lockname`을 추가합니다.
+CPU마다 lock name을 다르게 만들어야 하므로, `kmem` 구조체에 `lockname`을 추가한다.
 
 ```c
 /* kernel/kalloc.c */
@@ -28,7 +28,7 @@ struct {
 } kmem[NCPU];
 ```
 
-`kinit()`에서 `kmem`의 모든 element들을 초기화하도록 수정합니다.
+`kinit()`에서 `kmem`의 모든 element들을 초기화하도록 수정한다.
 
 ```c
 /* kernel/kalloc.c */
@@ -42,7 +42,7 @@ void kinit() {
 }
 ```
 
-`kfree()`에서 free한 메모리가 해당하는 CPU의 `freelist`에 들어가도록 수정합니다.
+`kfree()`에서 free한 메모리가 해당하는 CPU의 `freelist`에 들어가도록 수정한다.
 
 ```c
 /* kernel/kalloc.c */
@@ -57,7 +57,7 @@ void kfree(void *pa) {
 }
 ```
 
-`kalloc()`에서 현재 CPU의 `freelist`가 비어 있으면 다른 CPU의 `freelist`에서 free memory를 가져오도록 수정합니다.
+`kalloc()`에서 현재 CPU의 `freelist`가 비어 있으면 다른 CPU의 `freelist`에서 free memory를 가져오도록 수정한다.
 
 ```c
 /* kernel/kalloc.c */
@@ -84,7 +84,7 @@ kalloc(void) {
 
 ## Buffer cache
 
-`bcache`를 bcache bucket의 개수만큼 element들을 갖는 배열로 수정합니다.
+`bcache`를 bcache bucket의 개수만큼 element들을 갖는 배열로 수정한다.
 
 ```c
 /* kernel/bio.c */
@@ -103,7 +103,7 @@ struct {
 } bcache[NBUCKET];
 ```
 
-`binit()`에서 `bcache`의 모든 element들을 초기화하도록 수정합니다.
+`binit()`에서 `bcache`의 모든 element들을 초기화하도록 수정한다.
 
 ```c
 /* kernel/bio.c */
@@ -129,7 +129,7 @@ void binit(void) {
 }
 ```
 
-Buffer들을 여러 개의 bcache에 분산시키기 위해 `dev`와 `blockno`에 따라 bcache index를 계산하는 `bcache_idx()` 함수를 정의합니다.
+Buffer들을 여러 개의 bcache에 분산시키기 위해 `dev`와 `blockno`에 따라 bcache index를 계산하는 `bcache_idx()` 함수를 정의한다.
 
 ```c
 /* kernel/bio.c */
@@ -139,7 +139,7 @@ int bcache_idx(uint dev, uint blockno) {
 }
 ```
 
-`bget()`에서 bcache index를 계산하여 그 index에 해당하는 bcache를 get하도록 수정합니다.
+`bget()`에서 bcache index를 계산하여 그 index에 해당하는 bcache를 get하도록 수정한다.
 
 ```c
 /* kernel/bio.c */
@@ -179,7 +179,7 @@ bget(uint dev, uint blockno) {
 }
 ```
 
-`brelse`에서 bcache index를 계산하여 그 index에 해당하는 bcache를 release하도록 수정합니다.
+`brelse`에서 bcache index를 계산하여 그 index에 해당하는 bcache를 release하도록 수정한다.
 
 ```c
 /* kernel/bio.c */
@@ -208,7 +208,7 @@ void brelse(struct buf *b) {
 }
 ```
 
-`bpin()`과 `bunpin()`에서도 마찬가지로 bcache index를 계산하여 pin과 unpin하도록 수정합니다.
+`bpin()`과 `bunpin()`에서도 마찬가지로 bcache index를 계산하여 pin과 unpin하도록 수정한다.
 
 ```c
 /* kernel/bio.c */
