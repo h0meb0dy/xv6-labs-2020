@@ -4,7 +4,7 @@
 
 ## Uthread: switching between threads
 
-`thread` 구조체에 레지스터를 저장할 공간과 thread가 참조할 함수 포인터를 추가합니다.
+`thread` 구조체에 레지스터를 저장할 공간과 thread가 참조할 함수 포인터를 추가한다.
 
 ```c
 /* user/uthread.c */
@@ -34,7 +34,7 @@ struct thread {
 };
 ```
 
-`thread_schedule()`에서 `thread_switch()`를 호출합니다.
+`thread_schedule()`에서 `thread_switch()`를 호출한다.
 
 ```c
 /* user/uthread.c */
@@ -53,7 +53,7 @@ void thread_schedule(void) {
 }
 ```
 
-`swtch.S`의 `swtch()` 구현을 참고하여 `uthread_switch.S`의 `thread_switch()`를 구현합니다. 현재 thread의 callee-saved register들과 program counter, stack pointer를 `thread` 구조체의 `reg`에 저장하고, 다음 thread의 그 값들을 레지스터로 load합니다. 
+`swtch.S`의 `swtch()` 구현을 참고하여 `uthread_switch.S`의 `thread_switch()`를 구현한다. 현재 thread의 callee-saved register들과 program counter, stack pointer를 `thread` 구조체의 `reg`에 저장하고, 다음 thread의 그 값들을 레지스터로 load한다. 
 
 ```assembly
 /* user/uthread_switch.S */
@@ -104,7 +104,7 @@ thread_switch:
 	ret    /* return to ra */
 ```
 
-새로운 thread를 생성하는 `thread_create()`를 구현합니다.
+새로운 thread를 생성하는 `thread_create()`를 구현한다.
 
 ```c
 /* user/uthread.c */
@@ -123,7 +123,7 @@ void thread_create(void (*func)()) {
 
 ## Using threads
 
-`put_thread()` 앞쪽에 `lock`을 선언합니다.
+`put_thread()` 앞쪽에 `lock`을 선언한다.
 
 ```c
 /* notxv6/ph.c */
@@ -134,7 +134,7 @@ static void *
 put_thread(void *xa) {
 ```
 
-`main()`에서 `pthread_create()` 호출 전에 `lock`을 초기화합니다.
+`main()`에서 `pthread_create()` 호출 전에 `lock`을 초기화한다.
 
 ```c
 /* notxv6/ph.c */
@@ -146,7 +146,7 @@ put_thread(void *xa) {
     //
 ```
 
-`put_thread()`에서 `put()`을 lock과 unlock으로 감싸 줍니다.
+`put_thread()`에서 `put()`을 lock과 unlock으로 감싼다.
 
 ```c
 /* notxv6/ph.c */
@@ -160,9 +160,9 @@ put_thread(void *xa) {
 
 ![image](https://github.com/h0meb0dy/h0meb0dy/assets/104156058/c18aec78-68bc-41f7-a8a5-da9fcf504520)
 
-위처럼 `put()` 전체에 lock이 걸리면 single thread와 다를 바가 없기 때문에 `puts()` 내부의 critical section에만 lock이 걸리도록 하여 속도를 증진시킵니다.
+위처럼 `put()` 전체에 lock이 걸리면 single thread와 다를 바가 없기 때문에 `puts()` 내부의 critical section에만 lock이 걸리도록 하여 속도를 증진시킨다.
 
-`lock` 선언을 `puts()` 앞쪽으로 옮깁니다.
+`lock` 선언을 `puts()` 앞쪽으로 옮긴다.
 
 ```c
 /* notxv6/ph.c */
@@ -172,7 +172,7 @@ pthread_mutex_t lock;
 static void put(int key, int value) {
 ```
 
-위에서 `puts()`를 감싼 lock과 unlock을 제거하고, `puts()` 내부에서 `key`를 새로 추가하는 `insert()`를 lock과 unlock으로 감싸 줍니다.
+위에서 `puts()`를 감싼 lock과 unlock을 제거하고, `puts()` 내부에서 `key`를 새로 추가하는 `insert()`를 lock과 unlock으로 감싼다.
 
 ```c
 /* notxv6/ph.c */
@@ -189,7 +189,7 @@ static void put(int key, int value) {
 
 ## Barrier
 
-각각의 thread들이 `barrier()`에 도달할 때마다 `round`를 1씩 증가시키고 그 thread를 재웁니다. `round`가 thread 수와 같아지면 `round`를 초기화하고 `bstate.round`를 1 증가시킨 후 모든 thread를 깨웁니다. `barrier()`의 시작과 끝은 lock과 unlock으로 감싸 줍니다.
+각각의 thread들이 `barrier()`에 도달할 때마다 `round`를 1씩 증가시키고 그 thread를 재운다. `round`가 thread 수와 같아지면 `round`를 초기화하고 `bstate.round`를 1 증가시킨 후 모든 thread를 깨운다. `barrier()`의 시작과 끝은 lock과 unlock으로 감싼다.
 
 ```c
 /* notxv6/barrier.c */
