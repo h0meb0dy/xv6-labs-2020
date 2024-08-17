@@ -2,13 +2,13 @@
 
 > https://pdos.csail.mit.edu/6.S081/2020/labs/cow.html
 
-Xv6의 `fork()` system call은 parent process의 모든 user-space memory를 child로 copy합니다. Parent의 memory가 클수록 시간이 오래 걸릴 것이고, 만약 copy한 memory가 child에서 실제로 사용되지 않는다면 매우 비효율적인 작업이 됩니다. Copy-on-write(COW) fork의 목표는 memory가 실제로 필요한 시점에 copy하여 시간과 공간을 절약하는 것입니다.
+Xv6의 `fork()` system call은 parent process의 모든 user-space memory를 child로 copy한다. Parent의 memory가 클수록 시간이 오래 걸릴 것이고, 만약 copy한 memory가 child에서 실제로 사용되지 않는다면 매우 비효율적인 작업이 된다. Copy-on-write(COW) fork의 목표는 memory가 실제로 필요한 시점에 copy하여 시간과 공간을 절약하는 것이다.
 
 ## Implement copy-on write
 
-실제로 copy가 진행되기 전에는 page에 대한 reference count를 증가시켜서, 나중에 사용될 예정인 memory가 free되지 않도록 해야 합니다.
+실제로 copy가 진행되기 전에는 page에 대한 reference count를 증가시켜서, 나중에 사용될 예정인 memory가 free되지 않도록 해야 한다.
 
-`kalloc.c`에 reference count를 구현합니다.
+`kalloc.c`에 reference count를 구현한다.
 
 ```c
 /* kernel/kalloc.c */
@@ -45,7 +45,7 @@ kalloc(void) {
 }
 ```
 
-구현한 함수들은 `defs.h`에 추가합니다.
+구현한 함수들은 `defs.h`에 추가한다.
 
 ```c
 /* kernel/defs.h */
@@ -57,7 +57,7 @@ void inc_refcnt(uint64);
 void dec_refcnt(uint64);
 ```
 
-`uvmunmap()`에서 unmap할 때 reference count를 감소시키고, 메모리를 해제하기 전에 reference count가 0인지 검사하도록 합니다.
+`uvmunmap()`에서 unmap할 때 reference count를 감소시키고, 메모리를 해제하기 전에 reference count가 0인지 검사하도록 한다.
 
 ```c
 /* kernel/vm.c */
@@ -78,7 +78,7 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free) {
 }
 ```
 
-Trap 발생 시 COW로 인한 것인지 확인할 수 있도록 `riscv.h`에서 PTE의 RSW(reserved for supervised software) 영역에 `PTE_COW` 플래그를 추가합니다.
+Trap 발생 시 COW로 인한 것인지 확인할 수 있도록 `riscv.h`에서 PTE의 RSW(reserved for supervised software) 영역에 `PTE_COW` 플래그를 추가한다.
 
 ```c
 /* kernel/riscv.h */
@@ -91,7 +91,7 @@ Trap 발생 시 COW로 인한 것인지 확인할 수 있도록 `riscv.h`에서 
 #define PTE_COW (1L << 8) // COW mapping flag
 ```
 
-`uvmcopy()`에서 child의 메모리를 바로 할당하는 것이 아니라, child의 PTE가 실제로는 parent의 physical address와 map되도록 수정합니다. 이때 parent와 child 모두에서 `PTE_W`(쓰기 권한)를 삭제하고 `PTE_COW`(COW mapping flag)를 추가하고, physical address의 reference count를 증가시킵니다.
+`uvmcopy()`에서 child의 메모리를 바로 할당하는 것이 아니라, child의 PTE가 실제로는 parent의 physical address와 map되도록 수정한다. 이때 parent와 child 모두에서 `PTE_W`(쓰기 권한)를 삭제하고 `PTE_COW`(COW mapping flag)를 추가하고, physical address의 reference count를 증가시킨다.
 
 ```c
 /* kernel/vm.c */
@@ -118,7 +118,7 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
 }
 ```
 
-`usertrap()`에서 `scause`가 15이고 `PTE_COW` 플래그가 켜져 있을 경우, 메모리를 새로 할당하여 write 시도를 한 프로세스에게 할당합니다. 이때 `PTE_W`를 다시 추가하고 `PTE_COW`를 제거합니다.
+`usertrap()`에서 `scause`가 15이고 `PTE_COW` 플래그가 켜져 있을 경우, 메모리를 새로 할당하여 write 시도를 한 프로세스에게 할당한다. 이때 `PTE_W`를 다시 추가하고 `PTE_COW`를 제거한다.
 
 ```c
 /* kernel/trap.c */
@@ -163,7 +163,7 @@ void usertrap(void) {
 }
 ```
 
-`trap.c`에서 `walk()`를 호출할 수 있도록 `defs.h`에 추가합니다.
+`trap.c`에서 `walk()`를 호출할 수 있도록 `defs.h`에 추가한다.
 
 ```c
 /* kernel/defs.h */
@@ -173,7 +173,7 @@ void usertrap(void) {
 pte_t *walk(pagetable_t, uint64, int);
 ```
 
-`filetest` 테스트에서 `fork()` 이후에 parent에서 child로 4바이트 데이터를 주고받는 작업을 수행합니다.
+`filetest` 테스트에서 `fork()` 이후에 parent에서 child로 4바이트 데이터를 주고받는 작업을 수행한다.
 
 ```c
 /* user/cowtest.c */
@@ -211,9 +211,9 @@ filetest()
 }
 ```
 
-데이터는 parent에서 `copyin()`을 통해 kernel로 갔다가 `copyout()`을 통해 child로 가게 되는데, `copyout()`이 child의 메모리에 쓰려고 시도할 때 COW로 인해 parent와 공유하고 있는 physical address에 `PTE_W` 권한이 없어서 데이터를 정상적으로 받을 수 없습니다.
+데이터는 parent에서 `copyin()`을 통해 kernel로 갔다가 `copyout()`을 통해 child로 가게 되는데, `copyout()`이 child의 메모리에 쓰려고 시도할 때 COW로 인해 parent와 공유하고 있는 physical address에 `PTE_W` 권한이 없어서 데이터를 정상적으로 받을 수 없다.
 
-`copyout()`에서도 `usertrap()`에서처럼 COW로 인한 trap을 따로 처리하도록 하여 destination의 physical address를 수정하도록 합니다.
+`copyout()`에서도 `usertrap()`에서처럼 COW로 인한 trap을 따로 처리하도록 하여 destination의 physical address를 수정하도록 한다.
 
 ```c
 /* kernel/vm.c */
@@ -252,7 +252,7 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
 
 ![image](https://github.com/h0meb0dy/h0meb0dy/assets/104156058/e09991cc-5caf-495d-9f70-462939869008)
 
-`execout` 테스트는 할당 가능한 메모리가 남아 있지 않은 상태에서 panic이 발생하지 않는지 확인합니다.
+`execout` 테스트는 할당 가능한 메모리가 남아 있지 않은 상태에서 panic이 발생하지 않는지 확인한다.
 
 ```c
 /* user/usertests.c */
@@ -295,7 +295,7 @@ execout(char *s)
 }
 ```
 
-`usertrap()`과 `copyout()`에서 새로운 메모리를 할당하는 부분에서 각각 `kalloc()`의 반환값을 보고 메모리 할당이 성공했는지 확인하도록 합니다.
+`usertrap()`과 `copyout()`에서 새로운 메모리를 할당하는 부분에서 각각 `kalloc()`의 반환값을 보고 메모리 할당이 성공했는지 확인하도록 한다.
 
 ```c
 /* kernel/trap.c */
@@ -353,7 +353,7 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
 }
 ```
 
-`copyout` 테스트는 system call에 이상한 주소(`0x80000000`, `0xffffffffffffffff`)를 넣었을 때 system call이 실패하는지 확인합니다.
+`copyout` 테스트는 system call에 이상한 주소(`0x80000000`, `0xffffffffffffffff`)를 넣었을 때 system call이 실패하는지 확인한다.
 
 ```c
 /* user/usertests.c */
@@ -401,7 +401,7 @@ copyout(char *s)
 }
 ```
 
-`copyout()`에서 인자로 받은 `va0`로부터 `walk()`로 구한 `pte`가 0인지, 즉 `va0`가 invalid한 주소인지 확인하도록 합니다. 만약 `pte`가 0이면 error를 의미하는 `-1`을 반환합니다.
+`copyout()`에서 인자로 받은 `va0`로부터 `walk()`로 구한 `pte`가 0인지, 즉 `va0`가 invalid한 주소인지 확인하도록 한다. 만약 `pte`가 0이면 error를 의미하는 `-1`을 반환한다.
 
 ```c
 /* kernel/vm.c */
@@ -422,7 +422,7 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
 }
 ```
 
-`walk()`에서 인자로 받은 `va`가 `MAXVA`보다 클 때 발생하는 panic을 제거합니다.
+`walk()`에서 인자로 받은 `va`가 `MAXVA`보다 클 때 발생하는 panic을 제거한다.
 
 ```c
 /* kernel/vm.c */
